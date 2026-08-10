@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowUpRight, GitCompareArrows } from "lucide-react";
+import { ThemeToggle } from "@/components/landing/theme-toggle";
 
 export function SiteHeader() {
   return (
@@ -14,9 +15,12 @@ export function SiteHeader() {
         <span className="status-dot" aria-hidden="true" />
         <span>Public repositories</span>
       </div>
-      <a className="header-link" href="#method">
-        Method <ArrowUpRight size={14} aria-hidden="true" />
-      </a>
+      <div className="header-actions">
+        <ThemeToggle />
+        <a className="header-link" href="#method">
+          Method <ArrowUpRight size={14} aria-hidden="true" />
+        </a>
+      </div>
     </header>
   );
 }
