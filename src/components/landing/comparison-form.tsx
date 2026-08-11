@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { ArrowRight, Check, GitBranch, LoaderCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type FormErrors = {
   repoA?: string;
@@ -28,8 +28,9 @@ function toPathPart(value: string) {
 
 export function ComparisonForm() {
   const router = useRouter();
-  const [repoA, setRepoA] = useState("");
-  const [repoB, setRepoB] = useState("");
+  const searchParams = useSearchParams();
+  const [repoA, setRepoA] = useState(() => searchParams.get("repo-a") ?? "");
+  const [repoB, setRepoB] = useState(() => searchParams.get("repo-b") ?? "");
   const [errors, setErrors] = useState<FormErrors>({});
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -64,9 +65,7 @@ export function ComparisonForm() {
 
     setErrors({});
     setIsAnalyzing(true);
-    window.setTimeout(() => {
-      router.push(`/compare/${parsedA.owner}/${parsedA.repository}/vs/${parsedB.owner}/${parsedB.repository}`);
-    }, 350);
+    router.push(`/compare/${parsedA.owner}/${parsedA.repository}/vs/${parsedB.owner}/${parsedB.repository}`);
   }
 
   return (

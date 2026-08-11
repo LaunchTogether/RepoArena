@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## 2026-08-12
 
+- Fixed shared comparison URL prefill and immediate form navigation to live repository results.
 - Revised the GitHub comparison backend with strict request validation, safe API errors, nullable external metrics, parallel requests, and contract-based scoring.
 - Connected comparison URLs to the live GitHub analysis endpoint while preserving the existing responsive comparison design.
 

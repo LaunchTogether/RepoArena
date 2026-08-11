@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { ComparisonForm } from "@/components/landing/comparison-form";
 import { ExamplePanel } from "@/components/landing/example-panel";
 import { HowItWorks } from "@/components/landing/how-it-works";
@@ -15,7 +16,9 @@ export default function HomePage() {
             <h1 id="hero-title">Which repository <em>wins?</em></h1>
             <p className="hero-description">Compare GitHub repositories using real engineering metrics — not just stars.</p>
           </div>
-          <ComparisonForm />
+          <Suspense fallback={<div className="comparison-form" aria-busy="true" />}>
+            <ComparisonForm />
+          </Suspense>
         </section>
         <HowItWorks />
         <MetricsIndex />
