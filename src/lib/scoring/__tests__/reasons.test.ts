@@ -40,6 +40,7 @@ function createRepository(
       topics: ['example', 'testing'],
       ...overrides,
     },
+    report: {} as FetchedRepositoryInfo['report'],
   };
 }
 

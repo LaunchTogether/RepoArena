@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GitHubClientError } from '../../../../lib/github/client';
 import type { FetchedRepositoryInfo } from '../../../../lib/github/repositories';
 import { POST } from '../route';
-import { CompareErrorResponse, ComparisonResult } from '../../../../types/comparison';
+import { CompareErrorResponse, ComparisonResult, RepositoryReportMetrics } from '../../../../types/comparison';
 
 const { fetchRepositoryDataMock } = vi.hoisted(() => ({
   fetchRepositoryDataMock: vi.fn(),
@@ -11,6 +11,18 @@ const { fetchRepositoryDataMock } = vi.hoisted(() => ({
 vi.mock('../../../../lib/github/repositories', () => ({
   fetchRepositoryData: fetchRepositoryDataMock,
 }));
+
+const reportFixture: RepositoryReportMetrics = {
+  communityHealth: { value: { healthPercentage: 80, hasIssueTemplate: true, hasPullRequestTemplate: true }, status: 'available', sourceUrl: null },
+  activity: { value: { commitsLast7Days: 2, commitsLast30Days: 8, commitsLast90Days: 20, activeWeeksLast52: 15, trend: 'flat' }, status: 'available', sourceUrl: null },
+  release: { value: { latestName: 'v1.0.0', latestPublishedAt: '2026-08-01T00:00:00Z', releasesLastYear: 2, averageIntervalDays: 60 }, status: 'available', sourceUrl: null },
+  issues: { value: { openedLast90Days: 5, closedLast90Days: 4, openOlderThan90Days: 1, medianCloseDays: 3 }, status: 'available', sourceUrl: null },
+  pullRequests: { value: { mergedLast90Days: 3, openOlderThan30Days: 0, medianMergeDays: 2 }, status: 'available', sourceUrl: null },
+  workflow: { value: { completedRuns: 5, successfulRuns: 5, lastConclusion: 'success', lastRunAt: '2026-08-11T00:00:00Z' }, status: 'available', sourceUrl: null },
+  languages: { value: { totalBytes: 100, distribution: [{ name: 'TypeScript', bytes: 100, percentage: 100 }] }, status: 'available', sourceUrl: null },
+  contributors: { value: { activeContributors: 2, topContributorShare: 60 }, status: 'available', sourceUrl: null },
+  projectFiles: { value: { hasSecurityPolicy: true, hasChangelog: true, hasTests: true, hasCi: true, hasLockfile: true, hasDocker: false, hasLintConfig: true }, status: 'available', sourceUrl: null },
+};
 
 const repositoryFixture: FetchedRepositoryInfo = {
   ref: {
@@ -47,6 +59,7 @@ const repositoryFixture: FetchedRepositoryInfo = {
     language: 'TypeScript',
     topics: ['react'],
   },
+  report: reportFixture,
 };
 
 describe('POST /api/compare Endpoint', () => {
@@ -83,6 +96,40 @@ describe('POST /api/compare Endpoint', () => {
     expect(result.repoA.scores.overall).toBeGreaterThan(0);
     expect(result.repoB.scores.overall).toBeGreaterThan(0);
     expect(['repoA', 'repoB', null]).toContain(result.winner);
+    expect(result.report.coverage).toEqual({ available: 18, total: 18 });
+  });
+
+  it('returns an intent-specific evidence report for a valid comparison', async () => {
+    const request = new Request('http://localhost/api/compare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        repoA: 'facebook/react',
+        repoB: 'vuejs/core',
+        intent: 'adopting_library',
+      }),
+    });
+
+    const response = await POST(request);
+    const result = (await response.json()) as ComparisonResult;
+
+    expect(response.status).toBe(200);
+    expect(result.report.intent).toBe('adopting_library');
+    expect(result.report.intentSummary).toContain('release cadence');
+  });
+
+  it('rejects an unsupported comparison intent', async () => {
+    const request = new Request('http://localhost/api/compare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoA: 'facebook/react', repoB: 'vuejs/core', intent: 'unsupported' }),
+    });
+
+    const response = await POST(request);
+    const result = (await response.json()) as CompareErrorResponse;
+
+    expect(response.status).toBe(400);
+    expect(result.error.code).toBe('INVALID_REPOSITORY_URL');
   });
 
   it('should return 400 and INVALID_REPOSITORY_URL for invalid URL input', async () => {

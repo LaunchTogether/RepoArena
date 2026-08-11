@@ -1,5 +1,6 @@
-import { ComparisonResult } from '../../types/comparison';
+import { ComparisonIntent, ComparisonResult, ComparisonResultInput } from '../../types/comparison';
 import { FetchedRepositoryInfo } from '../github/repositories';
+import { generateReportInsights } from '../report/insights';
 import { computeRepositoryScores } from './categories';
 import { generateComparisonReasons } from './reasons';
 
@@ -9,7 +10,8 @@ import { generateComparisonReasons } from './reasons';
  */
 export function compareRepositories(
   repoAInfo: FetchedRepositoryInfo,
-  repoBInfo: FetchedRepositoryInfo
+  repoBInfo: FetchedRepositoryInfo,
+  intent: ComparisonIntent = 'general'
 ): ComparisonResult {
   const scoresA = computeRepositoryScores(repoAInfo.metrics, repoAInfo.summary);
   const scoresB = computeRepositoryScores(repoBInfo.metrics, repoBInfo.summary);
@@ -23,21 +25,28 @@ export function compareRepositories(
     winner = 'repoB';
   }
 
-  return {
+  const result: ComparisonResultInput = {
     repoA: {
       ref: repoAInfo.ref,
       summary: repoAInfo.summary,
       metrics: repoAInfo.metrics,
       scores: scoresA,
+      report: repoAInfo.report,
     },
     repoB: {
       ref: repoBInfo.ref,
       summary: repoBInfo.summary,
       metrics: repoBInfo.metrics,
       scores: scoresB,
+      report: repoBInfo.report,
     },
     reasons,
     winner,
     createdAt: new Date().toISOString(),
+  };
+
+  return {
+    ...result,
+    report: generateReportInsights(result, intent),
   };
 }

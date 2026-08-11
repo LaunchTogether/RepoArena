@@ -1,6 +1,35 @@
 import { describe, it, expect } from 'vitest';
 import { compareRepositories } from '../engine';
 import { calculateOverallScore, computeRepositoryScores } from '../categories';
+import type { RepositoryReportMetrics } from '../../../types/comparison';
+
+function createReportMetrics(): RepositoryReportMetrics {
+  const metric = <T,>(value: T) => ({
+    value,
+    status: 'available' as const,
+    sourceUrl: 'https://github.com/acme/project',
+  });
+
+  return {
+    communityHealth: metric({ healthPercentage: 75, hasIssueTemplate: true, hasPullRequestTemplate: true }),
+    activity: metric({ commitsLast7Days: 1, commitsLast30Days: 4, commitsLast90Days: 12, activeWeeksLast52: 12, trend: 'flat' as const }),
+    release: metric({ latestName: 'v1.0.0', latestPublishedAt: '2026-08-01T00:00:00Z', releasesLastYear: 1, averageIntervalDays: null }),
+    issues: metric({ openedLast90Days: 2, closedLast90Days: 2, openOlderThan90Days: 0, medianCloseDays: 2 }),
+    pullRequests: metric({ mergedLast90Days: 2, openOlderThan30Days: 0, medianMergeDays: 1 }),
+    workflow: metric({ completedRuns: 1, successfulRuns: 1, lastConclusion: 'success', lastRunAt: '2026-08-11T00:00:00Z' }),
+    languages: metric({ totalBytes: 100, distribution: [{ name: 'TypeScript', bytes: 100, percentage: 100 }] }),
+    contributors: metric({ activeContributors: 1, topContributorShare: 100 }),
+    projectFiles: metric({
+      hasSecurityPolicy: false,
+      hasChangelog: false,
+      hasTests: true,
+      hasCi: true,
+      hasLockfile: true,
+      hasDocker: false,
+      hasLintConfig: true,
+    }),
+  };
+}
 
 describe('Scoring Engine', () => {
   it('should compute scores clamped between 0 and 100', () => {
@@ -104,6 +133,7 @@ describe('Scoring Engine', () => {
         language: 'TypeScript',
         topics: ['testing'],
       },
+      report: createReportMetrics(),
     };
 
     expect(compareRepositories(repository, repository).winner).toBeNull();

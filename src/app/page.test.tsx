@@ -4,6 +4,7 @@ import HomePage from "@/app/page";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 describe("HomePage", () => {
