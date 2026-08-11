@@ -88,3 +88,91 @@ export interface CompareErrorDetail {
 export interface CompareErrorResponse {
   error: CompareErrorDetail;
 }
+
+export type ComparisonIntent =
+  | "general"
+  | "adopting_library"
+  | "contributing"
+  | "reference_project";
+
+export type MetricStatus = "available" | "unknown" | "not_configured" | "not_applicable";
+
+export interface MetricValue<T> {
+  value: T | null;
+  status: MetricStatus;
+  sourceUrl: string | null;
+}
+
+export interface RepositoryReportMetrics {
+  communityHealth: MetricValue<{
+    healthPercentage: number;
+    hasIssueTemplate: boolean;
+    hasPullRequestTemplate: boolean;
+  }>;
+  activity: MetricValue<{
+    commitsLast7Days: number;
+    commitsLast30Days: number;
+    commitsLast90Days: number;
+    activeWeeksLast52: number;
+    trend: "up" | "down" | "flat";
+  }>;
+  release: MetricValue<{
+    latestName: string | null;
+    latestPublishedAt: string | null;
+    releasesLastYear: number;
+    averageIntervalDays: number | null;
+  }>;
+  issues: MetricValue<{
+    openedLast90Days: number;
+    closedLast90Days: number;
+    openOlderThan90Days: number;
+    medianCloseDays: number | null;
+  }>;
+  pullRequests: MetricValue<{
+    mergedLast90Days: number;
+    openOlderThan30Days: number;
+    medianMergeDays: number | null;
+  }>;
+  workflow: MetricValue<{
+    completedRuns: number;
+    successfulRuns: number;
+    lastConclusion: string | null;
+    lastRunAt: string | null;
+  }>;
+  languages: MetricValue<{
+    totalBytes: number;
+    distribution: Array<{ name: string; bytes: number; percentage: number }>;
+  }>;
+  contributors: MetricValue<{
+    activeContributors: number;
+    topContributorShare: number | null;
+  }>;
+  projectFiles: MetricValue<{
+    hasSecurityPolicy: boolean;
+    hasChangelog: boolean;
+    hasTests: boolean;
+    hasCi: boolean;
+    hasLockfile: boolean;
+    hasDocker: boolean;
+    hasLintConfig: boolean;
+  }>;
+}
+
+export interface ReportDecisionDriver {
+  category: string;
+  label: string;
+  detail: string;
+  lead: "repoA" | "repoB";
+}
+
+export interface ComparisonReport {
+  intent: ComparisonIntent;
+  generatedAt: string;
+  coverage: {
+    available: number;
+    total: number;
+  };
+  repoA: RepositoryReportMetrics;
+  repoB: RepositoryReportMetrics;
+  decisionDrivers: ReportDecisionDriver[];
+}
