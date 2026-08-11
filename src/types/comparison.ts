@@ -15,31 +15,31 @@ export interface RepositoryRef {
 export interface RepositorySummary {
   name: string;
   description: string | null;
-  avatarUrl: string;
-  stars: number;
-  forks: number;
-  openIssues: number;
-  defaultBranch: string;
-  isArchived: boolean;
-  updatedAt: string;
+  avatarUrl: string | null;
+  stars: number | null;
+  forks: number | null;
+  openIssues: number | null;
+  defaultBranch: string | null;
+  isArchived: boolean | null;
+  updatedAt: string | null;
 }
 
 export interface RepositoryMetrics {
-  starsCount: number;
-  forksCount: number;
-  openIssuesCount: number;
-  subscribersCount: number;
+  starsCount: number | null;
+  forksCount: number | null;
+  openIssuesCount: number | null;
+  subscribersCount: number | null;
   license: string | null;
-  hasReadme: boolean;
-  hasLicense: boolean;
-  hasContributing: boolean;
-  hasCodeOfConduct: boolean;
+  hasReadme: boolean | null;
+  hasLicense: boolean | null;
+  hasContributing: boolean | null;
+  hasCodeOfConduct: boolean | null;
   pushedAt: string | null;
   createdAt: string | null;
   updatedAt: string | null;
-  sizeInKb: number;
+  sizeInKb: number | null;
   language: string | null;
-  topics: string[];
+  topics: string[] | null;
 }
 
 export interface RepositoryScores {
@@ -56,8 +56,12 @@ export interface RepositoryScores {
 export interface ScoreReason {
   kind: 'positive' | 'negative';
   label: string;
-  value?: string | number;
+  value?: string | number | boolean | null;
 }
+
+export type ScoreCategory = Exclude<keyof RepositoryScores, 'overall'>;
+
+export type ComparisonReasons = Record<ScoreCategory, ScoreReason[]>;
 
 export interface RepositoryComparisonData {
   ref: RepositoryRef;
@@ -69,8 +73,8 @@ export interface RepositoryComparisonData {
 export interface ComparisonResult {
   repoA: RepositoryComparisonData;
   repoB: RepositoryComparisonData;
-  reasons: Record<string, ScoreReason[]>;
-  winner: 'repoA' | 'repoB' | 'tie';
+  reasons: ComparisonReasons;
+  winner: 'repoA' | 'repoB' | null;
   createdAt: string;
 }
 
