@@ -2,14 +2,14 @@ import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import type { ScoreReason } from "@/lib/preview/types";
 
 type ScoreReasonsProps = {
-  repositoryName: string;
+  title: string;
   reasons: ScoreReason[];
 };
 
-export function ScoreReasons({ repositoryName, reasons }: ScoreReasonsProps) {
+export function ScoreReasons({ title, reasons }: ScoreReasonsProps) {
   return (
-    <section className="score-reasons" aria-labelledby={`${repositoryName}-reasons`}>
-      <h3 id={`${repositoryName}-reasons`}>{repositoryName} signals</h3>
+    <section className="score-reasons" aria-label={title}>
+      <h3>{title}</h3>
       <ul>
         {reasons.map((reason) => (
           <li className={reason.kind} key={`${reason.kind}-${reason.label}`}>

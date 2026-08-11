@@ -24,11 +24,18 @@ export class GitHubClientError extends Error {
 /**
  * Executes a server-side HTTP GET request to the GitHub REST API (v3).
  * Reads authentication token exclusively from process.env.GITHUB_TOKEN on the server.
- * Fallback to unauthenticated request if provided token is invalid (401).
  */
 export async function fetchGitHubApi<T>(endpoint: string, targetName?: string): Promise<T> {
   const baseUrl = 'https://api.github.com';
-  const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+  if (!endpoint.startsWith('/') || endpoint.startsWith('//')) {
+    throw new GitHubClientError({
+      code: 'GITHUB_DATA_UNAVAILABLE',
+      message: 'GitHub API requests must use a relative API path.',
+      target: targetName,
+    });
+  }
+
+  const url = `${baseUrl}${endpoint}`;
 
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github.v3+json',
@@ -49,20 +56,6 @@ export async function fetchGitHubApi<T>(endpoint: string, targetName?: string): 
       message: `Failed to connect to GitHub API: ${error instanceof Error ? error.message : String(error)}`,
       target: targetName,
     });
-  }
-
-  // If token was invalid (401 Bad Credentials), retry unauthenticated once for public resources
-  if (response.status === 401 && headers.Authorization) {
-    delete headers.Authorization;
-    try {
-      response = await fetch(url, { method: 'GET', headers });
-    } catch (error) {
-      throw new GitHubClientError({
-        code: 'GITHUB_DATA_UNAVAILABLE',
-        message: `Failed to connect to GitHub API: ${error instanceof Error ? error.message : String(error)}`,
-        target: targetName,
-      });
-    }
   }
 
   // Check Rate Limiting headers
@@ -112,7 +105,7 @@ export async function fetchGitHubApi<T>(endpoint: string, targetName?: string): 
 
   try {
     return (await response.json()) as T;
-  } catch (error) {
+  } catch {
     throw new GitHubClientError({
       code: 'GITHUB_DATA_UNAVAILABLE',
       message: `Failed to parse response JSON from GitHub API for "${targetName || endpoint}".`,

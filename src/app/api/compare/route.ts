@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { CompareErrorCode, CompareErrorResponse, ComparisonResult } from '../../../types/comparison';
 import { parseGitHubUrl, GitHubParserError } from '../../../lib/github/parser';
 import { fetchRepositoryData } from '../../../lib/github/repositories';
@@ -8,6 +9,13 @@ export interface CompareRequestBody {
   repoA: string;
   repoB: string;
 }
+
+const compareRequestSchema = z
+  .object({
+    repoA: z.string().trim().min(1),
+    repoB: z.string().trim().min(1),
+  })
+  .strict();
 
 function buildErrorResponse(
   code: CompareErrorCode,
@@ -41,20 +49,18 @@ function buildErrorResponse(
 export async function POST(request: Request): Promise<Response> {
   let body: CompareRequestBody;
   try {
-    body = (await request.json()) as CompareRequestBody;
+    body = compareRequestSchema.parse(await request.json());
   } catch {
-    return buildErrorResponse('INVALID_REPOSITORY_URL', 'Invalid JSON request body.', undefined, undefined, 400);
+    return buildErrorResponse(
+      'INVALID_REPOSITORY_URL',
+      'Provide exactly two non-empty repository URL fields: repoA and repoB.',
+      undefined,
+      undefined,
+      400
+    );
   }
 
-  const { repoA, repoB } = body || {};
-
-  if (!repoA || typeof repoA !== 'string') {
-    return buildErrorResponse('INVALID_REPOSITORY_URL', 'Field "repoA" is required.', 'repoA', undefined, 400);
-  }
-
-  if (!repoB || typeof repoB !== 'string') {
-    return buildErrorResponse('INVALID_REPOSITORY_URL', 'Field "repoB" is required.', 'repoB', undefined, 400);
-  }
+  const { repoA, repoB } = body;
 
   // Parse & validate URLs
   let refA;
@@ -103,10 +109,10 @@ export async function POST(request: Request): Promise<Response> {
 
     return buildErrorResponse(
       'GITHUB_DATA_UNAVAILABLE',
-      `An unexpected error occurred: ${err instanceof Error ? err.message : String(err)}`,
+      'Repository data is temporarily unavailable. Please try again shortly.',
       undefined,
       undefined,
-      500
+      503
     );
   }
 }

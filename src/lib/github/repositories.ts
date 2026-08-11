@@ -1,8 +1,8 @@
 import { RepositoryMetrics, RepositoryRef, RepositorySummary } from '../../types/comparison';
-import { fetchGitHubApi, GitHubClientError } from './client';
+import { fetchGitHubApi } from './client';
 
 interface RawGitHubRepositoryDto {
-  name: string;
+  name?: string;
   description: string | null;
   owner?: {
     avatar_url?: string;
@@ -42,6 +42,28 @@ export interface FetchedRepositoryInfo {
   metrics: RepositoryMetrics;
 }
 
+function nullableString(value: unknown): string | null {
+  return typeof value === 'string' ? value : null;
+}
+
+function nullableNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function nullableBoolean(value: unknown): boolean | null {
+  return typeof value === 'boolean' ? value : null;
+}
+
+function nullableStringArray(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  return value.every((item) => typeof item === 'string') ? value : null;
+}
+
+function nullableCommunityFile(value: unknown): boolean | null {
+  if (value === undefined) return null;
+  return Boolean(value);
+}
+
 /**
  * Fetches repository metadata and community profile info from GitHub REST API.
  * Combines endpoints into RepositorySummary and RepositoryMetrics data models.
@@ -51,45 +73,43 @@ export async function fetchRepositoryData(ref: RepositoryRef): Promise<FetchedRe
   const repoEndpoint = `/repos/${ref.owner}/${ref.name}`;
   const communityEndpoint = `/repos/${ref.owner}/${ref.name}/community/profile`;
 
-  const rawRepo = await fetchGitHubApi<RawGitHubRepositoryDto>(repoEndpoint, ref.fullName);
+  const [rawRepo, rawCommunity] = await Promise.all([
+    fetchGitHubApi<RawGitHubRepositoryDto>(repoEndpoint, ref.fullName),
+    fetchGitHubApi<RawGitHubCommunityProfileDto>(communityEndpoint, ref.fullName),
+  ]);
 
-  let rawCommunity: RawGitHubCommunityProfileDto | null = null;
-  try {
-    rawCommunity = await fetchGitHubApi<RawGitHubCommunityProfileDto>(communityEndpoint, ref.fullName);
-  } catch (err) {
-    // If community profile is 404 or fails, degrade gracefully with nulls
-    if (err instanceof GitHubClientError && err.code === 'REPOSITORY_NOT_FOUND') {
-      rawCommunity = null;
-    } else if (err instanceof GitHubClientError && err.code === 'GITHUB_RATE_LIMITED') {
-      // Re-throw rate limit errors
-      throw err;
-    }
-  }
+  const communityFiles = rawCommunity.files;
+  const communityLicense = nullableCommunityFile(communityFiles?.license);
+  const repositoryLicense = rawRepo.license === undefined ? null : rawRepo.license !== null;
 
   const summary: RepositorySummary = {
-    name: rawRepo.name || ref.name,
+    name: nullableString(rawRepo.name) ?? ref.name,
     description: rawRepo.description ?? null,
-    avatarUrl: rawRepo.owner?.avatar_url || '',
-    stars: rawRepo.stargazers_count ?? 0,
-    forks: rawRepo.forks_count ?? 0,
-    openIssues: rawRepo.open_issues_count ?? 0,
-    defaultBranch: rawRepo.default_branch || 'main',
-    isArchived: Boolean(rawRepo.archived),
-    updatedAt: rawRepo.updated_at || '',
+    avatarUrl: nullableString(rawRepo.owner?.avatar_url),
+    stars: nullableNumber(rawRepo.stargazers_count),
+    forks: nullableNumber(rawRepo.forks_count),
+    openIssues: nullableNumber(rawRepo.open_issues_count),
+    defaultBranch: nullableString(rawRepo.default_branch),
+    isArchived: nullableBoolean(rawRepo.archived),
+    updatedAt: nullableString(rawRepo.updated_at),
   };
 
-  const hasReadme = Boolean(rawCommunity?.files?.readme);
-  const hasLicense = Boolean(rawCommunity?.files?.license || rawRepo.license);
-  const hasContributing = Boolean(rawCommunity?.files?.contributing);
-  const hasCodeOfConduct = Boolean(rawCommunity?.files?.code_of_conduct);
+  const hasReadme = nullableCommunityFile(communityFiles?.readme);
+  const hasLicense = communityLicense === true || repositoryLicense === true
+    ? true
+    : communityLicense === false || repositoryLicense === false
+      ? false
+      : null;
+  const hasContributing = nullableCommunityFile(communityFiles?.contributing);
+  const hasCodeOfConduct = nullableCommunityFile(communityFiles?.code_of_conduct);
 
   const licenseName = rawRepo.license?.spdx_id || rawRepo.license?.name || null;
 
   const metrics: RepositoryMetrics = {
-    starsCount: rawRepo.stargazers_count ?? 0,
-    forksCount: rawRepo.forks_count ?? 0,
-    openIssuesCount: rawRepo.open_issues_count ?? 0,
-    subscribersCount: rawRepo.subscribers_count ?? 0,
+    starsCount: nullableNumber(rawRepo.stargazers_count),
+    forksCount: nullableNumber(rawRepo.forks_count),
+    openIssuesCount: nullableNumber(rawRepo.open_issues_count),
+    subscribersCount: nullableNumber(rawRepo.subscribers_count),
     license: licenseName,
     hasReadme,
     hasLicense,
@@ -98,9 +118,9 @@ export async function fetchRepositoryData(ref: RepositoryRef): Promise<FetchedRe
     pushedAt: rawRepo.pushed_at ?? null,
     createdAt: rawRepo.created_at ?? null,
     updatedAt: rawRepo.updated_at ?? null,
-    sizeInKb: rawRepo.size ?? 0,
+    sizeInKb: nullableNumber(rawRepo.size),
     language: rawRepo.language ?? null,
-    topics: Array.isArray(rawRepo.topics) ? rawRepo.topics : [],
+    topics: nullableStringArray(rawRepo.topics),
   };
 
   return {

@@ -16,12 +16,12 @@ export type RepositoryPreview = {
   fullName: string;
   owner: string;
   name: string;
-  description: string;
-  avatarUrl: string;
-  stars: number;
-  forks: number;
-  openIssues: number;
-  primaryLanguage: string;
+  description: string | null;
+  avatarUrl: string | null;
+  stars: number | null;
+  forks: number | null;
+  openIssues: number | null;
+  primaryLanguage: string | null;
 };
 
 export type RepositoryScorePreview = Record<ScoreCategory | "overall", number>;

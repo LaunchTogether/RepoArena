@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { parseGitHubUrl } from '../../github/parser';
-import { fetchRepositoryData } from '../../github/repositories';
 import { compareRepositories } from '../engine';
-import { computeRepositoryScores } from '../categories';
+import { calculateOverallScore, computeRepositoryScores } from '../categories';
 
 describe('Scoring Engine', () => {
   it('should compute scores clamped between 0 and 100', () => {
@@ -56,25 +54,58 @@ describe('Scoring Engine', () => {
     }
   });
 
-  it('should compare facebook/react vs vuejs/core correctly', async () => {
-    const refA = parseGitHubUrl('facebook/react');
-    const refB = parseGitHubUrl('vuejs/core');
+  it('weights popularity at five percent of the overall score', () => {
+    expect(
+      calculateOverallScore({
+        activity: 0,
+        maintenance: 0,
+        community: 0,
+        codebase: 0,
+        documentation: 0,
+        popularity: 100,
+        health: 0,
+      })
+    ).toBe(5);
+  });
 
-    const repoAData = await fetchRepositoryData(refA);
-    const repoBData = await fetchRepositoryData(refB);
+  it('returns null when both repositories have the same overall score', () => {
+    const repository = {
+      ref: {
+        owner: 'acme',
+        name: 'project',
+        fullName: 'acme/project',
+        url: 'https://github.com/acme/project',
+      },
+      summary: {
+        name: 'project',
+        description: 'A test repository description.',
+        avatarUrl: 'https://avatars.githubusercontent.com/u/1',
+        stars: 1,
+        forks: 1,
+        openIssues: 1,
+        defaultBranch: 'main',
+        isArchived: false,
+        updatedAt: '2026-08-11T00:00:00Z',
+      },
+      metrics: {
+        starsCount: 1,
+        forksCount: 1,
+        openIssuesCount: 1,
+        subscribersCount: 1,
+        license: 'MIT',
+        hasReadme: true,
+        hasLicense: true,
+        hasContributing: true,
+        hasCodeOfConduct: true,
+        pushedAt: '2026-08-11T00:00:00Z',
+        createdAt: '2025-01-01T00:00:00Z',
+        updatedAt: '2026-08-11T00:00:00Z',
+        sizeInKb: 100,
+        language: 'TypeScript',
+        topics: ['testing'],
+      },
+    };
 
-    const comparison = compareRepositories(repoAData, repoBData);
-
-    expect(comparison.repoA.ref.fullName).toBe('facebook/react');
-    expect(comparison.repoB.ref.fullName).toBe('vuejs/core');
-
-    expect(comparison.repoA.scores.overall).toBeGreaterThanOrEqual(0);
-    expect(comparison.repoA.scores.overall).toBeLessThanOrEqual(100);
-
-    expect(comparison.repoB.scores.overall).toBeGreaterThanOrEqual(0);
-    expect(comparison.repoB.scores.overall).toBeLessThanOrEqual(100);
-
-    expect(['repoA', 'repoB', 'tie']).toContain(comparison.winner);
-    expect(comparison.createdAt).toBeDefined();
-  }, 20000);
+    expect(compareRepositories(repository, repository).winner).toBeNull();
+  });
 });

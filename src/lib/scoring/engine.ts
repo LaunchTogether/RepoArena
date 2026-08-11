@@ -16,7 +16,7 @@ export function compareRepositories(
 
   const reasons = generateComparisonReasons(repoAInfo, repoBInfo);
 
-  let winner: 'repoA' | 'repoB' | 'tie' = 'tie';
+  let winner: 'repoA' | 'repoB' | null = null;
   if (scoresA.overall > scoresB.overall) {
     winner = 'repoA';
   } else if (scoresB.overall > scoresA.overall) {
