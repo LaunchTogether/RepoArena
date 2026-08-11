@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CompareErrorCode, CompareErrorResponse, ComparisonResult } from '../../../types/comparison';
+import { CompareErrorCode, CompareErrorResponse, ComparisonIntent, ComparisonResult } from '../../../types/comparison';
 import { parseGitHubUrl, GitHubParserError } from '../../../lib/github/parser';
 import { fetchRepositoryData } from '../../../lib/github/repositories';
 import { GitHubClientError } from '../../../lib/github/client';
@@ -8,12 +8,14 @@ import { compareRepositories } from '../../../lib/scoring/engine';
 export interface CompareRequestBody {
   repoA: string;
   repoB: string;
+  intent?: ComparisonIntent;
 }
 
 const compareRequestSchema = z
   .object({
     repoA: z.string().trim().min(1),
     repoB: z.string().trim().min(1),
+    intent: z.enum(['general', 'adopting_library', 'contributing', 'reference_project']).optional(),
   })
   .strict();
 
@@ -90,7 +92,7 @@ export async function POST(request: Request): Promise<Response> {
       fetchRepositoryData(refB),
     ]);
 
-    const result: ComparisonResult = compareRepositories(repoAData, repoBData);
+    const result: ComparisonResult = compareRepositories(repoAData, repoBData, body.intent);
 
     return new Response(JSON.stringify(result), {
       status: 200,

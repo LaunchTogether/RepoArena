@@ -96,6 +96,40 @@ describe('POST /api/compare Endpoint', () => {
     expect(result.repoA.scores.overall).toBeGreaterThan(0);
     expect(result.repoB.scores.overall).toBeGreaterThan(0);
     expect(['repoA', 'repoB', null]).toContain(result.winner);
+    expect(result.report.coverage).toEqual({ available: 18, total: 18 });
+  });
+
+  it('returns an intent-specific evidence report for a valid comparison', async () => {
+    const request = new Request('http://localhost/api/compare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        repoA: 'facebook/react',
+        repoB: 'vuejs/core',
+        intent: 'adopting_library',
+      }),
+    });
+
+    const response = await POST(request);
+    const result = (await response.json()) as ComparisonResult;
+
+    expect(response.status).toBe(200);
+    expect(result.report.intent).toBe('adopting_library');
+    expect(result.report.intentSummary).toContain('release cadence');
+  });
+
+  it('rejects an unsupported comparison intent', async () => {
+    const request = new Request('http://localhost/api/compare', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repoA: 'facebook/react', repoB: 'vuejs/core', intent: 'unsupported' }),
+    });
+
+    const response = await POST(request);
+    const result = (await response.json()) as CompareErrorResponse;
+
+    expect(response.status).toBe(400);
+    expect(result.error.code).toBe('INVALID_REPOSITORY_URL');
   });
 
   it('should return 400 and INVALID_REPOSITORY_URL for invalid URL input', async () => {
