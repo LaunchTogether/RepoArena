@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GitHubClientError } from '../../../../lib/github/client';
 import type { FetchedRepositoryInfo } from '../../../../lib/github/repositories';
 import { POST } from '../route';
-import { CompareErrorResponse, ComparisonResult } from '../../../../types/comparison';
+import { CompareErrorResponse, ComparisonResult, RepositoryReportMetrics } from '../../../../types/comparison';
 
 const { fetchRepositoryDataMock } = vi.hoisted(() => ({
   fetchRepositoryDataMock: vi.fn(),
@@ -47,6 +47,7 @@ const repositoryFixture: FetchedRepositoryInfo = {
     language: 'TypeScript',
     topics: ['react'],
   },
+  report: {} as RepositoryReportMetrics,
 };
 
 describe('POST /api/compare Endpoint', () => {

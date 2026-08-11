@@ -2,6 +2,10 @@ const CACHE_TTL_MS = 15 * 60 * 1000;
 
 const cache = new Map<string, { expiresAt: number; value: unknown }>();
 
+export function clearGitHubCache(): void {
+  cache.clear();
+}
+
 export async function getCachedValue<T>(key: string, loader: () => Promise<T>): Promise<T> {
   const cached = cache.get(key);
 

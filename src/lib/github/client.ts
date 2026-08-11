@@ -21,22 +21,12 @@ export class GitHubClientError extends Error {
   }
 }
 
-/**
- * Executes a server-side HTTP GET request to the GitHub REST API (v3).
- * Reads authentication token exclusively from process.env.GITHUB_TOKEN on the server.
- */
-export async function fetchGitHubApi<T>(endpoint: string, targetName?: string): Promise<T> {
-  const baseUrl = 'https://api.github.com';
-  if (!endpoint.startsWith('/') || endpoint.startsWith('//')) {
-    throw new GitHubClientError({
-      code: 'GITHUB_DATA_UNAVAILABLE',
-      message: 'GitHub API requests must use a relative API path.',
-      target: targetName,
-    });
-  }
+export type OptionalGitHubApiResult<T> =
+  | { kind: 'success'; data: T }
+  | { kind: 'not_found' }
+  | { kind: 'pending' };
 
-  const url = `${baseUrl}${endpoint}`;
-
+function buildGitHubHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github.v3+json',
     'User-Agent': 'RepoArena-App',
@@ -47,9 +37,22 @@ export async function fetchGitHubApi<T>(endpoint: string, targetName?: string): 
     headers.Authorization = `Bearer ${token}`;
   }
 
+  return headers;
+}
+
+async function requestGitHubApi(endpoint: string, targetName?: string): Promise<Response> {
+  const baseUrl = 'https://api.github.com';
+  if (!endpoint.startsWith('/') || endpoint.startsWith('//')) {
+    throw new GitHubClientError({
+      code: 'GITHUB_DATA_UNAVAILABLE',
+      message: 'GitHub API requests must use a relative API path.',
+      target: targetName,
+    });
+  }
+
   let response: Response;
   try {
-    response = await fetch(url, { method: 'GET', headers });
+    response = await fetch(`${baseUrl}${endpoint}`, { method: 'GET', headers: buildGitHubHeaders() });
   } catch (error) {
     throw new GitHubClientError({
       code: 'GITHUB_DATA_UNAVAILABLE',
@@ -58,26 +61,43 @@ export async function fetchGitHubApi<T>(endpoint: string, targetName?: string): 
     });
   }
 
-  // Check Rate Limiting headers
   const remaining = response.headers.get('x-ratelimit-remaining');
   const resetHeader = response.headers.get('x-ratelimit-reset');
-
-  let resetIsoString: string | undefined;
-  if (resetHeader) {
-    const resetTimeSec = parseInt(resetHeader, 10);
-    if (!isNaN(resetTimeSec) && resetTimeSec > 0) {
-      resetIsoString = new Date(resetTimeSec * 1000).toISOString();
-    }
-  }
+  const resetTimeSec = resetHeader ? Number.parseInt(resetHeader, 10) : Number.NaN;
+  const rateLimitReset = Number.isFinite(resetTimeSec) && resetTimeSec > 0
+    ? new Date(resetTimeSec * 1000).toISOString()
+    : undefined;
 
   if (response.status === 429 || (response.status === 403 && remaining === '0')) {
     throw new GitHubClientError({
       code: 'GITHUB_RATE_LIMITED',
       message: 'GitHub API rate limit exceeded. Please try again later or configure a valid GITHUB_TOKEN.',
       target: targetName,
-      rateLimitReset: resetIsoString,
+      rateLimitReset,
     });
   }
+
+  return response;
+}
+
+async function readJson<T>(response: Response, targetName?: string): Promise<T> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    throw new GitHubClientError({
+      code: 'GITHUB_DATA_UNAVAILABLE',
+      message: `Failed to parse response JSON from GitHub API for "${targetName || 'request'}".`,
+      target: targetName,
+    });
+  }
+}
+
+/**
+ * Executes a server-side HTTP GET request to the GitHub REST API (v3).
+ * Reads authentication token exclusively from process.env.GITHUB_TOKEN on the server.
+ */
+export async function fetchGitHubApi<T>(endpoint: string, targetName?: string): Promise<T> {
+  const response = await requestGitHubApi(endpoint, targetName);
 
   if (response.status === 404) {
     throw new GitHubClientError({
@@ -103,13 +123,28 @@ export async function fetchGitHubApi<T>(endpoint: string, targetName?: string): 
     });
   }
 
-  try {
-    return (await response.json()) as T;
-  } catch {
+  return readJson<T>(response, targetName || endpoint);
+}
+
+export async function fetchOptionalGitHubApi<T>(endpoint: string, targetName?: string): Promise<OptionalGitHubApiResult<T>> {
+  const response = await requestGitHubApi(endpoint, targetName);
+
+  if (response.status === 404) return { kind: 'not_found' };
+  if (response.status === 202) return { kind: 'pending' };
+  if (response.status === 401 || response.status === 403) {
     throw new GitHubClientError({
-      code: 'GITHUB_DATA_UNAVAILABLE',
-      message: `Failed to parse response JSON from GitHub API for "${targetName || endpoint}".`,
+      code: 'PRIVATE_REPOSITORY',
+      message: `Repository "${targetName || endpoint}" is private or inaccessible.`,
       target: targetName,
     });
   }
+  if (!response.ok) {
+    throw new GitHubClientError({
+      code: 'GITHUB_DATA_UNAVAILABLE',
+      message: `GitHub API returned error status ${response.status}: ${response.statusText}`,
+      target: targetName,
+    });
+  }
+
+  return { kind: 'success', data: await readJson<T>(response, targetName || endpoint) };
 }

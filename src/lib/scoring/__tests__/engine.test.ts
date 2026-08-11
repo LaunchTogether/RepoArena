@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { compareRepositories } from '../engine';
 import { calculateOverallScore, computeRepositoryScores } from '../categories';
+import type { FetchedRepositoryInfo } from '../../github/repositories';
 
 describe('Scoring Engine', () => {
   it('should compute scores clamped between 0 and 100', () => {
@@ -104,6 +105,7 @@ describe('Scoring Engine', () => {
         language: 'TypeScript',
         topics: ['testing'],
       },
+      report: {} as FetchedRepositoryInfo['report'],
     };
 
     expect(compareRepositories(repository, repository).winner).toBeNull();
