@@ -12,6 +12,18 @@ vi.mock('../../../../lib/github/repositories', () => ({
   fetchRepositoryData: fetchRepositoryDataMock,
 }));
 
+const reportFixture: RepositoryReportMetrics = {
+  communityHealth: { value: { healthPercentage: 80, hasIssueTemplate: true, hasPullRequestTemplate: true }, status: 'available', sourceUrl: null },
+  activity: { value: { commitsLast7Days: 2, commitsLast30Days: 8, commitsLast90Days: 20, activeWeeksLast52: 15, trend: 'flat' }, status: 'available', sourceUrl: null },
+  release: { value: { latestName: 'v1.0.0', latestPublishedAt: '2026-08-01T00:00:00Z', releasesLastYear: 2, averageIntervalDays: 60 }, status: 'available', sourceUrl: null },
+  issues: { value: { openedLast90Days: 5, closedLast90Days: 4, openOlderThan90Days: 1, medianCloseDays: 3 }, status: 'available', sourceUrl: null },
+  pullRequests: { value: { mergedLast90Days: 3, openOlderThan30Days: 0, medianMergeDays: 2 }, status: 'available', sourceUrl: null },
+  workflow: { value: { completedRuns: 5, successfulRuns: 5, lastConclusion: 'success', lastRunAt: '2026-08-11T00:00:00Z' }, status: 'available', sourceUrl: null },
+  languages: { value: { totalBytes: 100, distribution: [{ name: 'TypeScript', bytes: 100, percentage: 100 }] }, status: 'available', sourceUrl: null },
+  contributors: { value: { activeContributors: 2, topContributorShare: 60 }, status: 'available', sourceUrl: null },
+  projectFiles: { value: { hasSecurityPolicy: true, hasChangelog: true, hasTests: true, hasCi: true, hasLockfile: true, hasDocker: false, hasLintConfig: true }, status: 'available', sourceUrl: null },
+};
+
 const repositoryFixture: FetchedRepositoryInfo = {
   ref: {
     owner: 'facebook',
@@ -47,7 +59,7 @@ const repositoryFixture: FetchedRepositoryInfo = {
     language: 'TypeScript',
     topics: ['react'],
   },
-  report: {} as RepositoryReportMetrics,
+  report: reportFixture,
 };
 
 describe('POST /api/compare Endpoint', () => {

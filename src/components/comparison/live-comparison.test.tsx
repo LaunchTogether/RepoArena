@@ -17,6 +17,7 @@ const comparisonFixture: ComparisonResult = {
       updatedAt: '2026-08-11T00:00:00Z', sizeInKb: 500, language: 'JavaScript', topics: ['react'],
     },
     scores: { activity: 90, maintenance: 85, community: 80, codebase: 75, documentation: 90, popularity: 70, health: 95, overall: 85 },
+    report: {} as ComparisonResult['repoA']['report'],
   },
   repoB: {
     ref: { owner: 'vuejs', name: 'core', fullName: 'vuejs/core', url: 'https://github.com/vuejs/core' },
@@ -31,6 +32,7 @@ const comparisonFixture: ComparisonResult = {
       updatedAt: '2026-08-11T00:00:00Z', sizeInKb: 400, language: 'TypeScript', topics: ['vue'],
     },
     scores: { activity: 86, maintenance: 82, community: 75, codebase: 80, documentation: 88, popularity: 65, health: 92, overall: 82 },
+    report: {} as ComparisonResult['repoB']['report'],
   },
   reasons: {
     activity: [
@@ -41,6 +43,7 @@ const comparisonFixture: ComparisonResult = {
   },
   winner: 'repoA',
   createdAt: '2026-08-11T00:00:00Z',
+  report: {} as ComparisonResult['report'],
 };
 
 describe('LiveComparison', () => {

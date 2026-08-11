@@ -68,9 +68,10 @@ export interface RepositoryComparisonData {
   summary: RepositorySummary;
   metrics: RepositoryMetrics;
   scores: RepositoryScores;
+  report: RepositoryReportMetrics;
 }
 
-export interface ComparisonResult {
+export interface ComparisonResultInput {
   repoA: RepositoryComparisonData;
   repoB: RepositoryComparisonData;
   reasons: ComparisonReasons;
@@ -165,14 +166,32 @@ export interface ReportDecisionDriver {
   lead: "repoA" | "repoB";
 }
 
+export interface RepositoryReportInsights extends RepositoryReportMetrics {
+  strengths: string[];
+  risks: string[];
+}
+
+export interface ReportSourceLedgerEntry {
+  repository: "repoA" | "repoB";
+  metric: keyof RepositoryReportMetrics;
+  status: MetricStatus;
+  sourceUrl: string | null;
+}
+
 export interface ComparisonReport {
   intent: ComparisonIntent;
   generatedAt: string;
+  intentSummary: string;
   coverage: {
     available: number;
     total: number;
   };
-  repoA: RepositoryReportMetrics;
-  repoB: RepositoryReportMetrics;
+  repoA: RepositoryReportInsights;
+  repoB: RepositoryReportInsights;
+  sourceLedger: ReportSourceLedgerEntry[];
   decisionDrivers: ReportDecisionDriver[];
+}
+
+export interface ComparisonResult extends ComparisonResultInput {
+  report: ComparisonReport;
 }
