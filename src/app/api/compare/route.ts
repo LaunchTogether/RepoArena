@@ -42,7 +42,7 @@ function buildErrorResponse(
 
 /**
  * POST /api/compare
- * Body: { repoA: string, repoB: string }
+ * Body: { repoA: string, repoB: string, intent?: ComparisonIntent }
  *
  * Validates repository URLs, fetches GitHub API metrics concurrently,
  * evaluates scores and reasons, and returns ComparisonResult (HTTP 200)
