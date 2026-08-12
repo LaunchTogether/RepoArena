@@ -1,13 +1,9 @@
 "use client";
 
 import type { ComparisonIntent } from "@/types/comparison";
+import { useLocale } from "@/components/locale/locale-provider";
 
-const options: Array<{ value: ComparisonIntent; label: string }> = [
-  { value: "general", label: "General assessment" },
-  { value: "adopting_library", label: "Adopting a library" },
-  { value: "contributing", label: "Contributing" },
-  { value: "reference_project", label: "Reference project" },
-];
+const optionValues: ComparisonIntent[] = ["general", "adopting_library", "contributing", "reference_project"];
 
 type ComparisonIntentProps = {
   intent: ComparisonIntent;
@@ -15,16 +11,18 @@ type ComparisonIntentProps = {
 };
 
 export function ComparisonIntentControl({ intent, onChange }: ComparisonIntentProps) {
+  const { messages } = useLocale();
+
   return (
     <section className="comparison-intent" aria-labelledby="comparison-intent-title">
       <div>
-        <p className="eyebrow">Decision context</p>
-        <h2 id="comparison-intent-title">Read the same evidence for your goal.</h2>
+        <p className="eyebrow">{messages.report.intentKicker}</p>
+        <h2 id="comparison-intent-title">{messages.report.intentTitle}</h2>
       </div>
       <label>
-        <span className="sr-only">Comparison intent</span>
+        <span className="sr-only">{messages.report.intentLabel}</span>
         <select value={intent} onChange={(event) => onChange(event.target.value as ComparisonIntent)}>
-          {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          {optionValues.map((value) => <option key={value} value={value}>{messages.report.intents[value]}</option>)}
         </select>
       </label>
     </section>

@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## 2026-08-12
 
+- Added persistent TR/EN interface controls, localized report UI, and a reduced-motion-safe animated signal grid.
 - Added a premium Turkish README with verified product screenshots, architecture, setup guidance, and team ownership.
 - Added source-backed repository evidence panels, intent-aware analysis, and reproducible public comparison links.
 - Allowed the local `127.0.0.1` origin so Next.js can hydrate live comparison pages during development.

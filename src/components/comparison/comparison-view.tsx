@@ -1,3 +1,5 @@
+"use client";
+
 import { CategoryBattle } from "@/components/comparison/category-battle";
 import Link from "next/link";
 import { ComparisonSummary } from "@/components/comparison/comparison-summary";
@@ -17,16 +19,9 @@ import { WorkflowHealth } from "@/components/report/workflow-health";
 import type { ComparisonResultPreview, RepositoryAnalysisPreview, ScoreCategory } from "@/lib/preview/types";
 import { buildComparisonSharePath } from "@/lib/report/snapshot";
 import type { ComparisonIntent, ComparisonResult } from "@/types/comparison";
+import { useLocale } from "@/components/locale/locale-provider";
 
-const categories: { key: ScoreCategory; label: string }[] = [
-  { key: "activity", label: "Activity" },
-  { key: "maintenance", label: "Maintenance" },
-  { key: "community", label: "Community" },
-  { key: "codebase", label: "Codebase health" },
-  { key: "documentation", label: "Documentation" },
-  { key: "popularity", label: "Popularity" },
-  { key: "health", label: "Project health" },
-];
+const categoryKeys: ScoreCategory[] = ["activity", "maintenance", "community", "codebase", "documentation", "popularity", "health"];
 
 function isLiveResult(result: ComparisonResultPreview | ComparisonResult): result is ComparisonResult {
   return "createdAt" in result;
@@ -71,6 +66,7 @@ type ComparisonViewProps = {
 };
 
 export function ComparisonView({ result, intent = "general", onIntentChange }: ComparisonViewProps) {
+  const { messages } = useLocale();
   const isLive = isLiveResult(result);
   const repoA = isLive ? liveRepositoryAnalysis(result, "repoA") : result.repoA;
   const repoB = isLive ? liveRepositoryAnalysis(result, "repoB") : result.repoB;
@@ -83,9 +79,9 @@ export function ComparisonView({ result, intent = "general", onIntentChange }: C
     <main className="comparison-page">
       <div className="comparison-topline">
         <Link className="brand" href="/">RepoArena</Link>
-        <p>{isLive ? "Live GitHub analysis" : "Preview result"} <span aria-hidden="true">·</span> {isLive ? "generated from current repository data" : "sample scoring data"}</p>
+        <p>{isLive ? messages.comparison.topLive : messages.comparison.topPreview} <span aria-hidden="true">·</span> {isLive ? messages.comparison.generatedNow : messages.comparison.sampleData}</p>
       </div>
-      <section className="comparison-hero" aria-label="Repository overview">
+      <section className="comparison-hero" aria-label={messages.comparison.overview}>
         <RepositoryHeader repository={repoA.repository} position="A" />
         <div className="comparison-vs" aria-hidden="true"><span>VS</span></div>
         <RepositoryHeader repository={repoB.repository} position="B" />
@@ -99,7 +95,7 @@ export function ComparisonView({ result, intent = "general", onIntentChange }: C
         winner={result.winner}
       />
       {isLive ? (
-        <section className="report-overview" aria-label="Comparison evidence overview">
+        <section className="report-overview" aria-label={messages.report.evidenceOverview}>
           <EvidenceCoverage
             coverage={result.report.coverage}
             generatedAt={result.report.generatedAt}
@@ -118,24 +114,24 @@ export function ComparisonView({ result, intent = "general", onIntentChange }: C
       ) : null}
       <section className="category-section" aria-labelledby="category-title">
         <div className="section-intro">
-          <p className="eyebrow">Category scorecards</p>
-          <h2 id="category-title">Where the difference comes from.</h2>
+          <p className="eyebrow">{messages.comparison.categoriesKicker}</p>
+          <h2 id="category-title">{messages.comparison.categoriesTitle}</h2>
         </div>
         <div className="category-list">
-          {categories.map((category) => (
+          {categoryKeys.map((key) => (
             <CategoryBattle
-              key={category.key}
-              label={category.label}
+              key={key}
+              label={messages.comparison.categoryLabels[key]}
               repoAName={repoA.repository.name}
               repoBName={repoB.repository.name}
-              repoAScore={repoA.scores[category.key]}
-              repoBScore={repoB.scores[category.key]}
+              repoAScore={repoA.scores[key]}
+              repoBScore={repoB.scores[key]}
             />
           ))}
         </div>
       </section>
       {isLive ? (
-        <section className="report-detail-grid" aria-label="Repository delivery evidence">
+        <section className="report-detail-grid" aria-label={messages.report.deliveryEvidence}>
           <ActivityTimeline report={result.report} repoAName={repoA.repository.name} repoBName={repoB.repository.name} />
           <ReleaseCadence report={result.report} repoAName={repoA.repository.name} repoBName={repoB.repository.name} />
           <WorkflowHealth report={result.report} repoAName={repoA.repository.name} repoBName={repoB.repository.name} />
@@ -154,13 +150,13 @@ export function ComparisonView({ result, intent = "general", onIntentChange }: C
           />
         </section>
       ) : null}
-      <section className="reason-grid" aria-label="Score evidence">
+      <section className="reason-grid" aria-label={messages.report.scoreEvidence}>
         {isLive
-          ? categories.map((category) => (
+          ? categoryKeys.map((key) => (
               <ScoreReasons
-                key={category.key}
-                title={`${category.label} evidence`}
-                reasons={result.reasons[category.key]}
+                key={key}
+                title={messages.comparison.reasonEvidence(messages.comparison.categoryLabels[key])}
+                reasons={result.reasons[key]}
               />
             ))
           : <>

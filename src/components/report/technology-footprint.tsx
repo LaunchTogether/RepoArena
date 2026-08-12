@@ -1,4 +1,7 @@
+"use client";
+
 import type { MetricStatus, RepositoryReportInsights } from "@/types/comparison";
+import { useLocale } from "@/components/locale/locale-provider";
 
 type LanguagesMetric = RepositoryReportInsights["languages"];
 
@@ -9,20 +12,16 @@ type TechnologyFootprintProps = {
   repoBName: string;
 };
 
-function statusLabel(status: MetricStatus): string {
-  if (status === "unknown") return "Evidence unavailable";
-  if (status === "not_configured") return "Not configured";
-  if (status === "not_applicable") return "Not applicable";
-  return "Available";
-}
+type TechnologyCopy = { unavailable: string; configured: string; notApplicable: string; available: string; empty: string; language: string; share: string; kicker: string; title: string };
 
-function LanguageList({ metric }: { metric: LanguagesMetric }) {
+function LanguageList({ metric, copy }: { metric: LanguagesMetric; copy: TechnologyCopy }) {
+  const statusLabel = (status: MetricStatus) => status === "unknown" ? copy.unavailable : status === "not_configured" ? copy.configured : status === "not_applicable" ? copy.notApplicable : copy.available;
   if (metric.status !== "available" || metric.value === null) {
     return <p className="metric-status" data-status={metric.status}>{statusLabel(metric.status)}</p>;
   }
 
   if (metric.value.distribution.length === 0) {
-    return <p className="metric-status">No language distribution was returned.</p>;
+    return <p className="metric-status">{copy.empty}</p>;
   }
 
   return (
@@ -38,13 +37,13 @@ function LanguageList({ metric }: { metric: LanguagesMetric }) {
   );
 }
 
-function LanguageTable({ metric, repositoryName }: { metric: LanguagesMetric; repositoryName: string }) {
+function LanguageTable({ metric, repositoryName, copy }: { metric: LanguagesMetric; repositoryName: string; copy: TechnologyCopy }) {
   if (metric.status !== "available" || metric.value === null) return null;
 
   return (
     <table className="language-table">
-      <caption>{repositoryName} language distribution</caption>
-      <thead><tr><th scope="col">Language</th><th scope="col">Share</th></tr></thead>
+      <caption>{repositoryName} {copy.language}</caption>
+      <thead><tr><th scope="col">{copy.language}</th><th scope="col">{copy.share}</th></tr></thead>
       <tbody>
         {metric.value.distribution.map((language) => (
           <tr key={language.name}><th scope="row">{language.name}</th><td>{Math.round(language.percentage)}%</td></tr>
@@ -55,22 +54,26 @@ function LanguageTable({ metric, repositoryName }: { metric: LanguagesMetric; re
 }
 
 export function TechnologyFootprint({ repoA, repoB, repoAName, repoBName }: TechnologyFootprintProps) {
+  const { locale } = useLocale();
+  const copy: TechnologyCopy = locale === "tr"
+    ? { kicker: "Kod tabanı kanıtı", title: "Teknoloji izi", unavailable: "Kanıt kullanılamıyor", configured: "Yapılandırılmadı", notApplicable: "Geçerli değil", available: "Mevcut", empty: "Dil dağılımı dönmedi.", language: "Dil dağılımı", share: "Pay" }
+    : { kicker: "Codebase evidence", title: "Technology footprint", unavailable: "Evidence unavailable", configured: "Not configured", notApplicable: "Not applicable", available: "Available", empty: "No language distribution was returned.", language: "Language distribution", share: "Share" };
+
   return (
     <section className="report-panel technology-footprint" aria-labelledby="technology-footprint-title">
       <div className="report-panel-intro">
-        <p className="eyebrow">Codebase evidence</p>
-        <h2 id="technology-footprint-title">Technology footprint</h2>
+        <p className="eyebrow">{copy.kicker}</p><h2 id="technology-footprint-title">{copy.title}</h2>
       </div>
       <div className="technology-columns">
         <article>
           <h3>{repoAName}</h3>
-          <LanguageList metric={repoA} />
-          <LanguageTable metric={repoA} repositoryName={repoAName} />
+          <LanguageList metric={repoA} copy={copy} />
+          <LanguageTable metric={repoA} repositoryName={repoAName} copy={copy} />
         </article>
         <article>
           <h3>{repoBName}</h3>
-          <LanguageList metric={repoB} />
-          <LanguageTable metric={repoB} repositoryName={repoBName} />
+          <LanguageList metric={repoB} copy={copy} />
+          <LanguageTable metric={repoB} repositoryName={repoBName} copy={copy} />
         </article>
       </div>
     </section>

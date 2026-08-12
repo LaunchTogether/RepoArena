@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReportDecisionDriver } from "@/types/comparison";
+import { useLocale } from "@/components/locale/locale-provider";
 
 type DecisionDriversProps = {
   drivers: ReportDecisionDriver[];
@@ -7,14 +10,16 @@ type DecisionDriversProps = {
 };
 
 export function DecisionDrivers({ drivers, repoAName, repoBName }: DecisionDriversProps) {
+  const { messages } = useLocale();
+
   return (
     <section className="report-panel decision-drivers" aria-labelledby="decision-drivers-title">
       <div className="report-panel-intro">
-        <p className="eyebrow">Decision drivers</p>
-        <h2 id="decision-drivers-title">What drives this result</h2>
+        <p className="eyebrow">{messages.report.driversKicker}</p>
+        <h2 id="decision-drivers-title">{messages.report.driversTitle}</h2>
       </div>
       {drivers.length === 0 ? (
-        <p className="report-empty">No decisive difference emerged from the retrieved evidence.</p>
+        <p className="report-empty">{messages.report.noDrivers}</p>
       ) : (
         <ol className="decision-driver-list">
           {drivers.map((driver) => {
@@ -26,7 +31,7 @@ export function DecisionDrivers({ drivers, repoAName, repoBName }: DecisionDrive
                   <h3>{driver.label}</h3>
                   <p>{driver.detail}</p>
                 </div>
-                <strong>{leaderName} leads</strong>
+                <strong>{messages.report.leads(leaderName)}</strong>
               </li>
             );
           })}
