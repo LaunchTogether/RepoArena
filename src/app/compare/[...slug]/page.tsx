@@ -19,7 +19,7 @@ export default async function ComparisonPage({ params, searchParams }: Compariso
   const [{ slug }, query] = await Promise.all([params, searchParams]);
 
   if (slug.length !== 5 || slug[2] !== "vs") {
-    return <ComparisonError title="This comparison URL is invalid." detail="Use the comparison form to choose two public GitHub repositories." />;
+    return <ComparisonError variant="invalid-url" />;
   }
 
   const [ownerA, repositoryA, , ownerB, repositoryB] = slug;

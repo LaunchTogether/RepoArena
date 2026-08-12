@@ -1,4 +1,7 @@
+"use client";
+
 import type { MetricStatus, RepositoryReportInsights } from "@/types/comparison";
+import { useLocale } from "@/components/locale/locale-provider";
 
 type ProjectFilesMetric = RepositoryReportInsights["projectFiles"];
 
@@ -9,45 +12,31 @@ type ProjectHealthChecklistProps = {
   repoBName: string;
 };
 
-const practices = [
-  ["Security policy", "hasSecurityPolicy"],
-  ["Changelog", "hasChangelog"],
-  ["Tests", "hasTests"],
-  ["Continuous integration", "hasCi"],
-  ["Lockfile", "hasLockfile"],
-  ["Docker", "hasDocker"],
-  ["Lint configuration", "hasLintConfig"],
-] as const;
-
-function statusLabel(status: MetricStatus): string {
-  if (status === "unknown") return "Evidence unavailable";
-  if (status === "not_configured") return "Not configured";
-  if (status === "not_applicable") return "Not applicable";
-  return "Available";
-}
-
-function practiceLabel(metric: ProjectFilesMetric, key: (typeof practices)[number][1]): string {
-  if (metric.status !== "available" || metric.value === null) return statusLabel(metric.status);
-  return metric.value[key] ? "Detected" : "Not detected";
-}
+const practiceKeys = ["hasSecurityPolicy", "hasChangelog", "hasTests", "hasCi", "hasLockfile", "hasDocker", "hasLintConfig"] as const;
 
 export function ProjectHealthChecklist({ repoA, repoB, repoAName, repoBName }: ProjectHealthChecklistProps) {
+  const { locale } = useLocale();
+  const copy = locale === "tr"
+    ? { kicker: "Mühendislik güvenceleri", title: "Proje sağlığı kontrol listesi", caption: "Her depo için algılanan proje uygulamaları", practice: "Uygulama", labels: ["Güvenlik politikası", "Değişiklik günlüğü", "Testler", "Sürekli entegrasyon", "Kilit dosyası", "Docker", "Lint yapılandırması"], unknown: "Kanıt kullanılamıyor", configured: "Yapılandırılmadı", notApplicable: "Geçerli değil", available: "Mevcut", detected: "Algılandı", notDetected: "Algılanmadı" }
+    : { kicker: "Engineering safeguards", title: "Project health checklist", caption: "Detected project practices for each repository", practice: "Practice", labels: ["Security policy", "Changelog", "Tests", "Continuous integration", "Lockfile", "Docker", "Lint configuration"], unknown: "Evidence unavailable", configured: "Not configured", notApplicable: "Not applicable", available: "Available", detected: "Detected", notDetected: "Not detected" };
+  const statusLabel = (status: MetricStatus) => status === "unknown" ? copy.unknown : status === "not_configured" ? copy.configured : status === "not_applicable" ? copy.notApplicable : copy.available;
+  const practiceLabel = (metric: ProjectFilesMetric, key: (typeof practiceKeys)[number]) => metric.status !== "available" || metric.value === null ? statusLabel(metric.status) : metric.value[key] ? copy.detected : copy.notDetected;
+
   return (
     <section className="report-panel project-health-checklist" aria-labelledby="project-health-title">
       <div className="report-panel-intro">
-        <p className="eyebrow">Engineering safeguards</p>
-        <h2 id="project-health-title">Project health checklist</h2>
+        <p className="eyebrow">{copy.kicker}</p><h2 id="project-health-title">{copy.title}</h2>
       </div>
       <div className="report-table-wrap">
         <table>
-          <caption>Detected project practices for each repository</caption>
+          <caption>{copy.caption}</caption>
           <thead>
-            <tr><th scope="col">Practice</th><th scope="col">{repoAName}</th><th scope="col">{repoBName}</th></tr>
+            <tr><th scope="col">{copy.practice}</th><th scope="col">{repoAName}</th><th scope="col">{repoBName}</th></tr>
           </thead>
           <tbody>
-            {practices.map(([label, key]) => (
+            {practiceKeys.map((key, index) => (
               <tr key={key}>
-                <th scope="row">{label}</th>
+                <th scope="row">{copy.labels[index]}</th>
                 <td data-status={repoA.status}>{practiceLabel(repoA, key)}</td>
                 <td data-status={repoB.status}>{practiceLabel(repoB, key)}</td>
               </tr>

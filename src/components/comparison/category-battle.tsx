@@ -1,3 +1,7 @@
+"use client";
+
+import { useLocale } from "@/components/locale/locale-provider";
+
 type CategoryBattleProps = {
   label: string;
   repoAScore: number;
@@ -7,6 +11,7 @@ type CategoryBattleProps = {
 };
 
 export function CategoryBattle({ label, repoAScore, repoBScore, repoAName, repoBName }: CategoryBattleProps) {
+  const { messages } = useLocale();
   const winner = repoAScore === repoBScore ? null : repoAScore > repoBScore ? "A" : "B";
   const difference = Math.abs(repoAScore - repoBScore);
 
@@ -14,7 +19,7 @@ export function CategoryBattle({ label, repoAScore, repoBScore, repoAName, repoB
     <article className="category-battle">
       <header>
         <h3>{label}</h3>
-        <p>{winner ? `${winner === "A" ? repoAName : repoBName} leads by ${difference}` : "Evenly matched"}</p>
+        <p>{winner ? messages.comparison.leadsBy(winner === "A" ? repoAName : repoBName, difference) : messages.comparison.evenlyMatched}</p>
       </header>
       <div className="battle-bars">
         <div className={winner === "A" ? "battle-side is-winner" : "battle-side"}>

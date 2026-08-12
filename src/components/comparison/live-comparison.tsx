@@ -5,6 +5,7 @@ import type { CompareErrorResponse, ComparisonIntent, ComparisonResult } from "@
 import { AnalysisProgress } from "./analysis-progress";
 import { ComparisonError } from "./comparison-error";
 import { ComparisonView } from "./comparison-view";
+import { useLocale } from "@/components/locale/locale-provider";
 
 type LiveComparisonProps = {
   repoA: string;
@@ -24,6 +25,7 @@ function isCompareErrorResponse(value: unknown): value is CompareErrorResponse {
 export function LiveComparison({ repoA, repoB, initialIntent = "general" }: LiveComparisonProps) {
   const [state, setState] = useState<ComparisonState>({ kind: "loading" });
   const [intent, setIntent] = useState<ComparisonIntent>(initialIntent);
+  const { messages } = useLocale();
 
   useEffect(() => {
     let active = true;
@@ -38,11 +40,9 @@ export function LiveComparison({ repoA, repoB, initialIntent = "general" }: Live
         const payload: unknown = await response.json();
 
         if (!response.ok) {
-          const detail = isCompareErrorResponse(payload)
-            ? payload.error.message
-            : "Repository data could not be loaded. Please try again.";
+          const detail = isCompareErrorResponse(payload) ? messages.comparison.fallbackErrorDetail : messages.comparison.fallbackErrorDetail;
           if (active) {
-            setState({ kind: "error", title: "We could not compare these repositories.", detail });
+            setState({ kind: "error", title: messages.comparison.fallbackErrorTitle, detail });
           }
           return;
         }
@@ -54,8 +54,8 @@ export function LiveComparison({ repoA, repoB, initialIntent = "general" }: Live
         if (active) {
           setState({
             kind: "error",
-            title: "The comparison request could not be completed.",
-            detail: "Check your connection and try the comparison again.",
+            title: messages.comparison.requestErrorTitle,
+            detail: messages.comparison.requestErrorDetail,
           });
         }
       }
@@ -65,7 +65,7 @@ export function LiveComparison({ repoA, repoB, initialIntent = "general" }: Live
     return () => {
       active = false;
     };
-  }, [repoA, repoB, intent]);
+  }, [repoA, repoB, intent, messages]);
 
   function changeIntent(nextIntent: ComparisonIntent) {
     if (nextIntent === intent) return;

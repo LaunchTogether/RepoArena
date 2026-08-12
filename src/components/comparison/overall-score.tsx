@@ -1,3 +1,7 @@
+"use client";
+
+import { useLocale } from "@/components/locale/locale-provider";
+
 type OverallScoreProps = {
   repoAName: string;
   repoBName: string;
@@ -7,14 +11,15 @@ type OverallScoreProps = {
 };
 
 export function OverallScore({ repoAName, repoBName, repoAScore, repoBScore, winner }: OverallScoreProps) {
+  const { messages } = useLocale();
   const winnerName = winner === "repoA" ? repoAName : winner === "repoB" ? repoBName : null;
   const difference = Math.abs(repoAScore - repoBScore);
 
   return (
     <section className="overall-score" aria-labelledby="overall-title">
       <div className="overall-label">
-        <p className="eyebrow">RepoArena score</p>
-        <h2 id="overall-title">The overall read</h2>
+        <p className="eyebrow">{messages.comparison.scoreKicker}</p>
+        <h2 id="overall-title">{messages.comparison.scoreTitle}</h2>
       </div>
       <div className="score-pair">
         <div className={winner === "repoA" ? "score-number is-winner" : "score-number"}>
@@ -28,7 +33,7 @@ export function OverallScore({ repoAName, repoBName, repoAScore, repoBScore, win
         </div>
       </div>
       <p className="winner-copy">
-        {winnerName ? <><span>Winner</span> {winnerName} <b>+{difference}</b></> : "No overall winner — the scores are tied."}
+        {winnerName ? <><span>{messages.comparison.winner}</span> {winnerName} <b>+{difference}</b></> : messages.comparison.tied}
       </p>
     </section>
   );

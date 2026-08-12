@@ -2,6 +2,7 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
+import { useLocale } from "@/components/locale/locale-provider";
 
 type Theme = "dark" | "light";
 
@@ -30,13 +31,14 @@ function applyTheme(theme: Theme) {
 
 export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribeToThemeChange, getStoredTheme, () => "dark");
+  const { messages } = useLocale();
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
   const nextTheme: Theme = theme === "dark" ? "light" : "dark";
-  const label = nextTheme === "light" ? "Switch to light theme" : "Switch to dark theme";
+  const label = nextTheme === "light" ? messages.theme.switchToLight : messages.theme.switchToDark;
 
   return (
     <button
@@ -49,7 +51,7 @@ export function ThemeToggle() {
       title={label}
     >
       {theme === "dark" ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
-      <span>{theme === "dark" ? "Light" : "Dark"}</span>
+      <span>{theme === "dark" ? messages.theme.light : messages.theme.dark}</span>
     </button>
   );
 }
