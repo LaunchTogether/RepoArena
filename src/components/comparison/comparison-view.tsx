@@ -16,6 +16,8 @@ import { ReleaseCadence } from "@/components/report/release-cadence";
 import { ShareComparison } from "@/components/report/share-comparison";
 import { TechnologyFootprint } from "@/components/report/technology-footprint";
 import { WorkflowHealth } from "@/components/report/workflow-health";
+import { LanguageSwitch } from "@/components/locale/language-switch";
+import { ThemeToggle } from "@/components/landing/theme-toggle";
 import type { ComparisonResultPreview, RepositoryAnalysisPreview, ScoreCategory } from "@/lib/preview/types";
 import { buildComparisonSharePath } from "@/lib/report/snapshot";
 import type { ComparisonIntent, ComparisonResult } from "@/types/comparison";
@@ -80,6 +82,10 @@ export function ComparisonView({ result, intent = "general", onIntentChange }: C
       <div className="comparison-topline">
         <Link className="brand" href="/">RepoArena</Link>
         <p>{isLive ? messages.comparison.topLive : messages.comparison.topPreview} <span aria-hidden="true">·</span> {isLive ? messages.comparison.generatedNow : messages.comparison.sampleData}</p>
+        <div className="comparison-actions">
+          <ThemeToggle />
+          <LanguageSwitch />
+        </div>
       </div>
       <section className="comparison-hero" aria-label={messages.comparison.overview}>
         <RepositoryHeader repository={repoA.repository} position="A" />

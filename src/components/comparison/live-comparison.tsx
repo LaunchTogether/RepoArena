@@ -82,7 +82,7 @@ export function LiveComparison({ repoA, repoB, initialIntent = "general" }: Live
     setState({ kind: "loading" });
   }
 
-  if (state.kind === "loading") return <AnalysisProgress />;
+  if (state.kind === "loading") return <main className="comparison-loading"><AnalysisProgress /></main>;
   if (state.kind === "error") return <ComparisonError title={state.title} detail={state.detail} />;
 
   return <ComparisonView result={state.result} intent={intent} onIntentChange={changeIntent} />;

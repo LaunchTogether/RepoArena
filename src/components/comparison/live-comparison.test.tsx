@@ -91,6 +91,14 @@ describe('LiveComparison', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/compare', expect.objectContaining({ method: 'POST' }));
   });
 
+  it('centers the in-flight analysis in a full viewport container', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => undefined)));
+
+    const { container } = render(<LiveComparison repoA="https://github.com/facebook/react" repoB="https://github.com/vuejs/core" />);
+
+    expect(container.querySelector('main.comparison-loading')).toBeInTheDocument();
+  });
+
   it('reloads evidence with the selected decision intent and keeps it in the share URL', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify(comparisonFixture), { status: 200, headers: { 'Content-Type': 'application/json' } })
