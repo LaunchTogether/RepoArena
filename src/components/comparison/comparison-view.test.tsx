@@ -13,4 +13,11 @@ describe("ComparisonView", () => {
     expect(screen.getByText("Large open issue backlog")).toBeInTheDocument();
     expect(screen.getByText("Active maintainer interaction")).toBeInTheDocument();
   });
+
+  it("keeps theme and language controls available on report pages", () => {
+    render(<ComparisonView result={previewComparison} />);
+
+    expect(screen.getByRole("button", { name: "Türkçe" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Switch to light theme" })).toBeInTheDocument();
+  });
 });
